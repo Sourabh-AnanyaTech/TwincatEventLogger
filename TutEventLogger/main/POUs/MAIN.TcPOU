@@ -3,7 +3,7 @@
   <POU Name="MAIN" Id="{16dd2937-1a56-496b-9281-972e8d7713a8}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM MAIN
 VAR
-	st_event: ST_Event;
+	st_event: ST_Event; // Only this structs copy is being used everywhere.
 	once: BOOL := FALSE;
 	
 	csvEventStorage: FB_CSVEventStorage;
