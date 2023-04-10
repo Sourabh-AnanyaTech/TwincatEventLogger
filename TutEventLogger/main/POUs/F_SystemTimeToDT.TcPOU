@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_SystemTimeToDT" Id="{2282536c-1e5f-4a9d-ab80-42973dfc3a94}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_SystemTimeToDT : DT
+VAR CONSTANT
+    SECONDS_BETWEEN_1601_AND_1970 : ULINT := 11_644_473_600;
+END_VAR
+VAR_INPUT
+    nSystemTime : ULINT; // One unit is 100 ns since 1 January 1601
+END_VAR
+VAR
+    nSeconds : ULINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Unix time is measured in seconds since January 1, 1970.
+nSeconds := (nSystemTime / 10_000_000) - SECONDS_BETWEEN_1601_AND_1970;
+F_SystemTimeToDT := ULINT_TO_DT(nSeconds); // It is returning it in UTC]]></ST>
+    </Implementation>
+    <LineIds Name="F_SystemTimeToDT">
+      <LineId Id="18" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

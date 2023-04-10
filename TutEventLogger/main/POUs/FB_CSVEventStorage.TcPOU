@@ -1,0 +1,191 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_CSVEventStorage" Id="{f353186e-7405-4515-8068-9da4b6365fa3}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CSVEventStorage IMPLEMENTS EventStorage
+VAR 
+	// Enum for state machine
+	eWriteState: (	FILE_OPEN_TRIGGER,FILE_OPEN,WAIT_FOR_EVENT,WRITE_EVENT_TRIGGER,
+					WRITE_EVENT,FILE_CLOSE_TRIGGER, FILE_CLOSE,ERROR);
+				 
+	fbFileOpen: FB_FileOpen := (bExecute := FALSE, sPathName := 'C:\Events.log', nMode := FOPEN_MODEAPPEND OR FOPEN_MODETEXT);
+	
+	fbFilePuts: FB_FilePuts();
+	fbFileClose: FB_FileClose();
+
+	stWriteEvent: ST_EVENT; // The st_event which is supposed to be written	
+	csvString: T_MaxString;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE eWriteState OF
+	
+	FILE_OPEN_TRIGGER :
+		// Start the function, the rising edge is started and the function will be continously called 
+		// until windows allows it to be opened
+		fbFileOpen(bExecute:= TRUE);
+		eWriteState := FILE_OPEN;
+		
+	FILE_OPEN :
+		fbFileOpen(bExecute:= FALSE);
+		IF fbFileOpen.bError THEN
+			eWriteState := ERROR; // You can also do something like rerunning the above to check again
+		ELSIF NOT fbFileOpen.bBusy AND fbFileOpen.hFile <> 0 THEN
+			 eWriteState := WAIT_FOR_EVENT;
+		END_IF
+	
+	WAIT_FOR_EVENT :
+		// Do Nothing here see StoreEvent
+	
+	WRITE_EVENT_TRIGGER:
+		csvString := STEventToCSVString(stEvent := stWriteEvent);
+		fbFilePuts(bExecute:= FALSE);
+		fbFilePuts(bExecute:= TRUE, sLine := csvString, hFile := fbFileOpen.hFile);
+		eWriteState := WRITE_EVENT;
+	
+	WRITE_EVENT :
+		fbFilePuts(bExecute:= FALSE);
+		IF fbFilePuts.bError THEN
+			eWriteState := Error;
+		ELSIF NOT fbFilePuts.bBusy THEN
+			// This was for when we had to coninously wait for new writes in storeEVent method
+			// But it wouldn't write as the file had to be closed
+			// eWriteState:= WAIT_FOR_EVENT; 
+			
+			eWriteState:= FILE_CLOSE_TRIGGER;
+		END_IF
+		
+	
+	FILE_CLOSE_TRIGGER: 
+		fbFileClose(bExecute := FALSE);
+		fbFileClose(bExecute := TRUE, hFile :=fbFileOpen.hFile);
+		eWriteState := FILE_CLOSE;
+		
+	FILE_CLOSE :
+		fbFileClose(bExecute := FALSE);
+		IF fbFileClose.bError THEN
+			eWriteState := Error;
+		ELSIF NOT fbFileClose.bBusy THEN
+			eWriteState := FILE_OPEN_TRIGGER;
+		END_IF
+	
+	ERROR :
+		fbFileOpen.nErrId;
+	
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="STEventToCSVString" Id="{8b6c81ef-06b6-4710-a9f7-053a54dfe41d}">
+      <Declaration><![CDATA[METHOD PRIVATE STEventToCSVString: T_MaxString
+VAR_INPUT
+	stEvent : REFERENCE TO ST_EVENT;
+END_VAR
+VAR
+	stringHolder: T_MaxString;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[stringHolder := TO_STRING(stEvent.eEventType); // This works because of the attribute added to the enum
+stringHolder := CONCAT(str1 := stringHolder, str2 := ',');
+
+stringHolder := CONCAT(str1 := stringHolder, str2 := TO_STRING(stEvent.eEventSeverity)); // Here only numbers will be added
+stringHolder := CONCAT(str1 := stringHolder, str2 := ',');
+
+stringHolder := CONCAT(str1 := stringHolder, str2 := TO_STRING(stEvent.nEventId));
+stringHolder := CONCAT(str1 := stringHolder, str2 := ',');
+
+stringHolder := CONCAT(str1 := stringHolder, str2 := F_RTRIM(stEvent.sEventText));
+stringHolder := CONCAT(str1 := stringHolder, str2 := ',');
+
+stringHolder := CONCAT(str1 := stringHolder, str2 := TO_STRING(stEvent.dtTimeStamp));
+stringHolder := CONCAT(str1 := stringHolder, str2 := '$n'); // New line
+
+STEventToCSVString := stringHolder;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StoreEvent" Id="{2010f449-e83a-464f-a1c0-9ccf79d9cd0a}">
+      <Declaration><![CDATA[// add method implementation 
+METHOD StoreEvent
+VAR_INPUT
+	st_event	: ST_Event;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF eWriteState = WAIT_FOR_EVENT THEN
+	eWriteState := WRITE_EVENT_TRIGGER;
+	stWriteEvent:= st_event;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CSVEventStorage">
+      <LineId Id="9" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="57" Count="1" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="68" Count="1" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="113" Count="1" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="115" Count="1" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="108" Count="1" />
+      <LineId Id="111" Count="1" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="65" Count="1" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="33" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CSVEventStorage.STEventToCSVString">
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="24" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CSVEventStorage.StoreEvent">
+      <LineId Id="7" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <DUT Name="ST_Event" Id="{a11b9414-a744-45bc-a9be-ed23605bf6d1}">
+    <Declaration><![CDATA[TYPE ST_Event :
+STRUCT
+	eEventType: E_EventType;
+	eEventSeverity: TcEventSeverity;
+	nEventId: UINT;
+	sEventText: STRING(255); // 255 is a good size because most of the twincat built in functions can handle 255
+	dtTimeStamp: DATE_AND_TIME;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

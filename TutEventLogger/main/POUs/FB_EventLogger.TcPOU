@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_EventLogger" Id="{a942f2bf-159f-4cae-ba24-c9efa6a07217}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EventLogger
+VAR
+	eventBuffer: ARRAY[1..EVENT_BUFFER_SIZE] OF ST_Event;
+	currentBufferIndex: USINT := 0;
+	
+	_eventStorage: EventStorage; // setting this in the constructor/FB_init
+	
+END_VAR
+VAR CONSTANT
+	EVENT_BUFFER_SIZE: INT := 10;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="AddEvent" Id="{1c250104-f2e5-40ae-8808-3208892b77db}">
+      <Declaration><![CDATA[METHOD AddEvent : BOOL
+VAR_INPUT
+	event: ST_EVENT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF (currentBufferIndex + 1) < EVENT_BUFFER_SIZE THEN
+	currentBufferIndex := currentBufferIndex + 1;
+	F_UpdateEventTimeStamp(st_event := event);
+	event.nEventId := currentBufferIndex;
+	eventBuffer[currentBufferIndex]:= event;
+	
+	// Here we store event persistently
+	_eventStorage.StoreEvent(st_event:= event);
+END_IF ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{d8743572-4575-42a7-aef9-69c0c0f25234}">
+      <Declaration><![CDATA[(****
+ 
+Called implicitly whenever an instance of the Event Logger is instantiated.
+Like a Constructor.
+
+*****)
+
+METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+
+	// Require something that implementes EventStorage interface	
+	eventStorage: EventStorage;
+	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_eventStorage := eventStorage;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EventLogger">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EventLogger.AddEvent">
+      <LineId Id="5" Count="1" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EventLogger.FB_init">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

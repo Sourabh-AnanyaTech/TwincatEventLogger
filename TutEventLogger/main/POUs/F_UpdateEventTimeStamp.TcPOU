@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="F_UpdateEventTimeStamp" Id="{3e3e5dfe-3711-4edd-a58f-8af49b3b2532}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_UpdateEventTimeStamp
+VAR_INPUT
+	st_event : REFERENCE TO ST_Event;
+END_VAR
+VAR
+	ulns: ULINT;
+	fileTime: T_FILETIME;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ulns := F_GETSYSTEMTIME();
+st_event.dtTimeStamp := F_SystemTimeToDT(nSystemTime:= ulns);]]></ST>
+    </Implementation>
+    <LineIds Name="F_UpdateEventTimeStamp">
+      <LineId Id="7" Count="0" />
+      <LineId Id="15" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
