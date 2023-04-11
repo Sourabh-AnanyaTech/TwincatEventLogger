@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_EventRingBuffer" Id="{25ad3e8a-4f6d-4351-9acd-b5c2778efcb1}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EventRingBuffer
+VAR
+	ringBuffer: FB_MemRingBuffer;
+	arrBuffer : ARRAY[0..MAX_BUFFER_SIZE] OF BYTE; (*Buffer memory used by the FB_MemRingBuffer*)
+END_VAR
+VAR CONSTANT
+	SIZE_OF_ST_EVENT: UDINT := SIZEOF(ST_Event); // Get the number of bytes required for ST_EVENT
+	MAX_NUM_OF_ST_EVENTS: UDINT := 5;
+	
+	// Now the ring buffer size to store 5 ST_EVENTS
+	MAX_BUFFER_SIZE: UDINT := SIZE_OF_ST_EVENT * MAX_NUM_OF_ST_EVENTS;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="AddEvent" Id="{66c43a9f-9afd-4064-93bf-3a30f4763221}">
+      <Declaration><![CDATA[METHOD AddEvent
+VAR_INPUT
+	stEvent: REFERENCE TO ST_Event;
+END_VAR
+VAR_OUTPUT
+	bIsError: Bool;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ringBuffer.A_AddTail(
+	pWrite := ADR(stEvent),
+	cbWrite:= SIZEOF(stEvent),
+	pBuffer:= ADR(arrBuffer),
+	cbBuffer:= SIZEOF(arrBuffer)
+);
+
+// Returns TRUE, if a new data set was added or removed successfully.
+// Returns FALSE in the event of a buffer overflow or if no more entries are available in the buffer.
+bIsError := NOT ringBuffer.bOk; ]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ClearRingBuffer" Id="{e2e64739-7569-4c44-a8ec-08a69472d858}">
+      <Declaration><![CDATA[METHOD ClearRingBuffer : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ringBuffer.A_Reset(
+	pBuffer:= ADR(arrBuffer),
+	cbBuffer:= SIZEOF(arrBuffer)
+);
+
+ClearRingBuffer := ringBuffer.bOk;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetAndRemoveEvent" Id="{4f335e0a-75f8-42a6-ae04-e0a3966521f9}">
+      <Declaration><![CDATA[METHOD GetAndRemoveEvent
+VAR_OUTPUT
+	stEvent: ST_Event;
+	bError: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ringBuffer.A_RemoveHead(
+	pRead := ADR(stEvent),
+	cbRead:= SIZEOF(stEvent),
+	pBuffer:= ADR(arrBuffer),
+	cbBuffer:= SIZEOF(arrBuffer)
+);
+
+bError := NOT ringBuffer.bOk;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetBufferEventCount" Id="{43d95c24-33c6-44ac-8ba9-4eeeb7763028}">
+      <Declaration><![CDATA[METHOD GetBufferEventCount : UDINT
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[GetBufferEventCount :=	ringBuffer.nCount;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EventRingBuffer">
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EventRingBuffer.AddEvent">
+      <LineId Id="5" Count="0" />
+      <LineId Id="8" Count="2" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="23" Count="2" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EventRingBuffer.ClearRingBuffer">
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EventRingBuffer.GetAndRemoveEvent">
+      <LineId Id="8" Count="4" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EventRingBuffer.GetBufferEventCount">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

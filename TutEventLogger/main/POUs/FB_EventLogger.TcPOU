@@ -7,6 +7,7 @@ VAR
 	currentBufferIndex: USINT := 0;
 	
 	_eventStorage: EventStorage; // setting this in the constructor/FB_init
+	ringBuffer: FB_EventRingBuffer;
 	
 END_VAR
 VAR CONSTANT
@@ -20,18 +21,39 @@ END_VAR
       <Declaration><![CDATA[METHOD AddEvent : BOOL
 VAR_INPUT
 	event: ST_EVENT;
+	// event: REFERENCE TO ST_EVENT;
+END_VAR
+VAR
+	readEvent: ST_EVENT;
+	bIsReadFailed: BOOL;
+	nRemainingEventCount: UDINT;
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF (currentBufferIndex + 1) < EVENT_BUFFER_SIZE THEN
+        <ST><![CDATA[(*
+IF (currentBufferIndex + 1) < EVENT_BUFFER_SIZE THEN
 	currentBufferIndex := currentBufferIndex + 1;
 	F_UpdateEventTimeStamp(st_event := event);
 	event.nEventId := currentBufferIndex;
+
 	eventBuffer[currentBufferIndex]:= event;
 	
 	// Here we store event persistently
 	_eventStorage.StoreEvent(st_event:= event);
-END_IF ]]></ST>
+END_IF 
+*)
+
+// Using the RingBuffer here
+F_UpdateEventTimeStamp(st_event := event);
+ringBuffer.AddEvent(stEvent:= event, bIsError => AddEvent);
+
+
+// Here we store event persistently
+//_eventStorage.StoreEvent(st_event:= event);
+IF ringBuffer.GetBufferEventCount() > 0 THEN
+	ringBuffer.GetAndRemoveEvent(stEvent => readEvent, bError => bIsReadFailed);
+	_eventStorage.StoreEvent(readEvent);	
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="FB_init" Id="{d8743572-4575-42a7-aef9-69c0c0f25234}">
@@ -60,13 +82,9 @@ END_VAR
       <LineId Id="9" Count="0" />
     </LineIds>
     <LineIds Name="FB_EventLogger.AddEvent">
-      <LineId Id="5" Count="1" />
-      <LineId Id="12" Count="1" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="21" Count="0" />
-      <LineId Id="23" Count="0" />
-      <LineId Id="22" Count="0" />
-      <LineId Id="7" Count="0" />
+      <LineId Id="68" Count="19" />
+      <LineId Id="92" Count="2" />
+      <LineId Id="91" Count="0" />
     </LineIds>
     <LineIds Name="FB_EventLogger.FB_init">
       <LineId Id="7" Count="0" />
